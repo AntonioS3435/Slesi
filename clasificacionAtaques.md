@@ -1,0 +1,1 @@
+! Escribid el texto aquí, con titulos subtitulos y despueś se pasa a Latex (a no ser que tengáis una mejor idea) 
