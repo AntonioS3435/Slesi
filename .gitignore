@@ -4,4 +4,4 @@ __pycache__/
 *.tmp
 .gemini/
 data/
-temp/
+.temp/
