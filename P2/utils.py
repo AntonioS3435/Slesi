@@ -5,6 +5,21 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
 import copy
+import random
+import numpy as np
+
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+# Establecer la semilla global para garantizar la reproducibilidad
+set_seed(42)
 
 class SimpleCNN(nn.Module):
     def __init__(self):
