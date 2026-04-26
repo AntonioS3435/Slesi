@@ -83,7 +83,6 @@ global_model = SimpleCNN().to(device)
 local_models = [SimpleCNN().to(device) for _ in range(num_clients)]
 
 print(f"Entorno listo en {device}. Datos cargados y modelos instanciados.")
-client_loaders = [DataLoader(part, batch_size=64, shuffle=True) for part in partitions]
 
 def train_local(model, train_loader, epochs=1, lr=0.01):
     model.train()
