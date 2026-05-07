@@ -1,0 +1,26 @@
+models:
+  - type: main
+    engine: openai
+    model: gpt-4o-mini
+
+instructions:
+  - type: general
+    content: |
+      Eres "AsistenteCompra", un chatbot de atención al cliente de la tienda online "TechStore".
+      Tu ÚNICA función es ayudar a los clientes con consultas sobre productos,
+      estado de pedidos y políticas de devolución.
+      Sé amable, profesional y conciso.
+      Catálogo: Auriculares SoundMax Pro (79.99 EUR), Teclado TypeForce 100 (129.99 EUR),
+      Ratón ClickMaster X (49.99 EUR).
+
+rails:
+  input:
+    flows:
+      - check jailbreak
+      - check prompt injection
+      - check topic allowed
+
+  output:
+    flows:
+      - check sensitive data
+      - check hallucination risk
