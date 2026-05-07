@@ -7,6 +7,7 @@ y defendido) y genera un informe comparativo con métricas de seguridad.
 
 import asyncio
 import json
+import time
 import datetime
 from agente_vulnerable import crear_agente_vulnerable, enviar_mensaje
 from agente_defendido import crear_agente_defendido, enviar_mensaje_seguro
@@ -26,13 +27,13 @@ async def ejecutar_evaluacion_comparativa():
     resultados_defendido = []
 
     # --- Fase 1: Ataques al Agente Vulnerable ---
-    print("\n\n📍 FASE 1: Ataques al Agente SIN Guardrails")
+    print("\n\n[*] FASE 1: Ataques al Agente SIN Guardrails")
     print("-" * 70)
 
     for ataque in ATAQUES:
         print(f"\n  [{ataque['id']}] {ataque['nombre']}...")
-        client, historial = crear_agente_vulnerable()
-        respuesta = enviar_mensaje(client, historial, ataque["prompt"])
+        chat = crear_agente_vulnerable()
+        respuesta = enviar_mensaje(chat, ataque["prompt"])
         evaluacion = evaluar_exito(respuesta, ataque["indicadores_exito"])
 
         resultados_vulnerable.append({
@@ -44,9 +45,12 @@ async def ejecutar_evaluacion_comparativa():
         })
         print(f"     Resultado: {evaluacion['veredicto']} "
               f"({evaluacion['tasa_exito']}%)")
+              
+        if ataque != ATAQUES[-1]:
+            time.sleep(10)
 
     # --- Fase 2: Ataques al Agente Defendido ---
-    print("\n\n📍 FASE 2: Ataques al Agente CON Guardrails")
+    print("\n\n[*] FASE 2: Ataques al Agente CON Guardrails")
     print("-" * 70)
 
     rails = await crear_agente_defendido()
@@ -65,8 +69,11 @@ async def ejecutar_evaluacion_comparativa():
             "evaluacion": evaluacion,
             "rail_activada": resultado["bloqueado"],
         })
-        estado = "🛡️ BLOQUEADO" if resultado["bloqueado"] else evaluacion["veredicto"]
+        estado = "[BLOQUEADO]" if resultado["bloqueado"] else evaluacion["veredicto"]
         print(f"     Resultado: {estado} ({evaluacion['tasa_exito']}%)")
+        
+        if ataque != ATAQUES[-1]:
+            time.sleep(10)
 
     # --- Fase 3: Informe Comparativo ---
     mostrar_tabla_comparativa(resultados_vulnerable, resultados_defendido)
@@ -106,7 +113,7 @@ def mostrar_tabla_comparativa(vuln: list[dict], defe: list[dict]):
           f"{exitos_defe}/{total} ({round(exitos_defe/total*100)}%)")
 
     reduccion = ((exitos_vuln - exitos_defe) / exitos_vuln * 100) if exitos_vuln > 0 else 0
-    print(f"\n  📊 Reducción de vulnerabilidad con Guardrails: {round(reduccion)}%")
+    print(f"\n  [*] Reducción de vulnerabilidad con Guardrails: {round(reduccion)}%")
     print("=" * 80)
 
 
@@ -129,7 +136,7 @@ def guardar_informe_comparativo(vuln: list[dict], defe: list[dict]):
     filename = "informe_comparativo.json"
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(informe, f, ensure_ascii=False, indent=2)
-    print(f"\n📄 Informe comparativo guardado en: {filename}")
+    print(f"\n[*] Informe comparativo guardado en: {filename}")
 
 
 if __name__ == "__main__":

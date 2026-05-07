@@ -8,11 +8,12 @@ y salidas del modelo, actuando como un firewall semántico.
 
 import asyncio
 from nemoguardrails import RailsConfig, LLMRails
-from config import OPENAI_API_KEY
+from config import GOOGLE_API_KEY
 import os
 
-# Asegurar que la API key esté disponible para NeMo Guardrails
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY or ""
+# Asegurar que la API key este disponible para NeMo Guardrails
+os.environ["GEMINI_API_KEY"] = GOOGLE_API_KEY or ""
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY or ""
 
 
 async def crear_agente_defendido() -> LLMRails:
@@ -29,6 +30,9 @@ async def crear_agente_defendido() -> LLMRails:
     return rails
 
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=4, max=30))
 async def enviar_mensaje_seguro(rails: LLMRails, mensaje_usuario: str) -> dict:
     """
     Envía un mensaje al agente defendido y devuelve la respuesta

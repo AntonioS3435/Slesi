@@ -1,7 +1,7 @@
 models:
   - type: main
-    engine: openai
-    model: gpt-4o-mini
+    engine: google_genai
+    model: gemini-flash-latest
 
 instructions:
   - type: general
@@ -23,4 +23,3 @@ rails:
   output:
     flows:
       - check sensitive data
-      - check hallucination risk
