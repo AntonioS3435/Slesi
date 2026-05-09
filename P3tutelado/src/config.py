@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-LLM_MODEL = "gemini-flash-latest"
+LLM_MODEL = "gemini-2.5-flash-lite"
 LLM_TEMPERATURE = 0.3
 
 SYSTEM_SECRETS = {

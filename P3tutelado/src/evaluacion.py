@@ -92,16 +92,16 @@ def mostrar_tabla_comparativa(vuln: list[dict], defe: list[dict]):
     exitos_defe = 0
 
     for v, d in zip(vuln, defe):
-        estado_v = "ÉXITO" if "ÉXITO" in v["evaluacion"]["veredicto"] else (
+        estado_v = "EXITO" if "EXITO" in v["evaluacion"]["veredicto"] else (
             "PARCIAL" if "PARCIAL" in v["evaluacion"]["veredicto"] else "FALLIDO"
         )
         estado_d = "BLOQUEADO" if d.get("rail_activada") else (
-            "ÉXITO" if "ÉXITO" in d["evaluacion"]["veredicto"] else "FALLIDO"
+            "EXITO" if "EXITO" in d["evaluacion"]["veredicto"] else "FALLIDO"
         )
 
-        if "ÉXITO" in estado_v:
+        if "EXITO" in estado_v:
             exitos_vuln += 1
-        if "ÉXITO" in estado_d:
+        if "EXITO" in estado_d:
             exitos_defe += 1
 
         print(f"  {v['id']:<8} {v['nombre'][:28]:<30} {estado_v:<18} {estado_d:<18}")
@@ -123,11 +123,11 @@ def guardar_informe_comparativo(vuln: list[dict], defe: list[dict]):
         "fecha": datetime.datetime.now().isoformat(),
         "total_ataques": len(vuln),
         "agente_vulnerable": {
-            "exitosos": sum(1 for r in vuln if "ÉXITO" in r["evaluacion"]["veredicto"]),
+            "exitosos": sum(1 for r in vuln if "EXITO" in r["evaluacion"]["veredicto"]),
             "detalle": vuln,
         },
         "agente_defendido": {
-            "exitosos": sum(1 for r in defe if "ÉXITO" in r["evaluacion"]["veredicto"]),
+            "exitosos": sum(1 for r in defe if "EXITO" in r["evaluacion"]["veredicto"]),
             "bloqueados": sum(1 for r in defe if r.get("rail_activada")),
             "detalle": defe,
         },
