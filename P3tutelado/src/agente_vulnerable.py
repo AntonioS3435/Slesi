@@ -11,7 +11,7 @@ Dependencias:
     - tenacity
 """
 
-import time
+
 
 from google import genai
 from tenacity import (
@@ -26,7 +26,6 @@ from config import (
     LLM_MODEL,
     LLM_TEMPERATURE,
     MAX_RETRIES,
-    REQUEST_DELAY_SECONDS,
     VULNERABLE_SYSTEM_PROMPT,
 )
 
@@ -52,6 +51,24 @@ def crear_agente_vulnerable():
         config=genai.types.GenerateContentConfig(
             system_instruction=VULNERABLE_SYSTEM_PROMPT,
             temperature=LLM_TEMPERATURE,
+            safety_settings=[
+                genai.types.SafetySetting(
+                    category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                genai.types.SafetySetting(
+                    category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                genai.types.SafetySetting(
+                    category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                genai.types.SafetySetting(
+                    category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+            ],
         ),
     )
     return chat
