@@ -1,0 +1,178 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{booktabs}
+\usepackage{graphicx}
+
+% Tema minimalista y profesional
+\usetheme{Boadilla}
+\usecolortheme{seahorse}
+
+% Quitar iconos de navegación abajo
+\setbeamertemplate{navigation symbols}{}
+
+% Título y Autores
+\title[Seguridad en LLMs]{Seguridad en GenAI y LLMs: \\ De la Vulnerabilidad a la Mitigación mediante Guardrails}
+\subtitle{Trabajo Tutelado - Seguridad en los Sistemas Informáticos}
+\author[Grupo GN]{Grupo GN \\ \small Autor 1, Óscar Vilela, Autor 3}
+\institute[UDC]{Universidade da Coruña \\ Facultade de Informática}
+\date{\today}
+
+\begin{document}
+
+% DIAPOSITIVA 1: Portada
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% DIAPOSITIVA 2: El problema estructural
+\begin{frame}{El Problema Estructural}
+    \framesubtitle{La convergencia del plano de control y de datos}
+    
+    \begin{block}{Arquitectura Transformer}
+        El \textit{System Prompt}, el historial de la conversación y el \textit{User Input} se concatenan en una \textbf{ventana de contexto única}.
+    \end{block}
+    
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item \textbf{Procesamiento monolítico:} No existe distinción jerárquica entre instrucciones y datos. Todos son tokens.
+        \item \textbf{Ataque semántico:} Se explota la naturaleza probabilística del lenguaje natural, no fallos de sintaxis.
+        \item \textbf{Riesgo:} Secuestro del flujo de ejecución del agente (Prompt Injection).
+    \end{itemize}
+\end{frame}
+
+% DIAPOSITIVA 3: Taxonomía OWASP
+\begin{frame}{Taxonomía de Ataques OWASP (2025)}
+    \framesubtitle{Principales vulnerabilidades evaluadas}
+    
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular}{llp{7cm}}
+            \toprule
+            \textbf{ID} & \textbf{Vulnerabilidad} & \textbf{Impacto} \\
+            \midrule
+            \textbf{LLM01} & Prompt Injection & Secuestro del modelo y \textit{Jailbreaking}. \\
+            \addlinespace
+            \textbf{LLM02} & Sensitive Info. & Revelación de PII y secretos de empresa. \\
+            \addlinespace
+            \textbf{LLM06} & Excessive Agency & Acciones no autorizadas (APIs, funciones). \\
+            \addlinespace
+            \textbf{LLM07} & Prompt Leakage & Exposición de reglas y arquitectura interna. \\
+            \addlinespace
+            \textbf{LLM09} & Misinformation & Generación de contenido engañoso o \textit{phishing}. \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+% DIAPOSITIVA 4: Marco Legal
+\begin{frame}{Implicaciones Éticas y Legislativas}
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{block}{Reglamento de IA (AI Act)}
+            \begin{itemize}
+                \item \textbf{Art. 15:} Obligación de robustez frente a ataques (ej. inyecciones de prompts).
+                \item \textbf{Art. 14:} Supervisión humana obligatoria.
+                \item Multas de hasta \textbf{15M \texteuro} o el \textbf{3\%} de la facturación global.
+            \end{itemize}
+        \end{block}
+        
+        \column{0.5\textwidth}
+        \begin{block}{Reglamento General (RGPD)}
+            \begin{itemize}
+                \item Aplica si la vulneración produce una exfiltración de datos personales (\textit{Data Leakage}).
+                \item Multas severas de hasta el \textbf{4\%} de la facturación mundial.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+% DIAPOSITIVA 5: Estrategias de Mitigación
+\begin{frame}{Estrategias de Mitigación}
+    \framesubtitle{Hacia una Defensa en Profundidad}
+    
+    \begin{enumerate}
+        \item \textbf{Alineamiento Interno (RLHF):} \\
+        Capa "blanda". El modelo aprende a rechazar, pero es vulnerable a \textit{Jailbreaks} sofisticados.
+        \vspace{0.3cm}
+        
+        \item \textbf{Ingeniería Defensiva de Prompts:} \\
+        Uso de delimitadores claros (ej. etiquetas XML) para encapsular la entrada del usuario.
+        \vspace{0.3cm}
+        
+        \item \textbf{Arquitectura de Guardrails (Firewall Semántico):} \\
+        Capa externa que actúa como \textit{proxy}.
+        \begin{itemize}
+            \item \textbf{Input Rails:} Filtran intenciones maliciosas antes del LLM.
+            \item \textbf{Output Rails:} Bloquean fugas de datos en la respuesta.
+        \end{itemize}
+    \end{enumerate}
+\end{frame}
+
+% DIAPOSITIVA 6: PoC Vulnerable
+\begin{frame}{Prueba de Concepto (PoC) - Agente Vulnerable}
+    \framesubtitle{Antipatrón de Seguridad}
+    
+    \begin{block}{El Escenario: "AsistenteCompra"}
+        Chatbot con un System Prompt que contiene datos sensibles (contraseñas y APIs) e instrucciones "blandas" de no revelarlos. Modelo base: Gemini 3.1 Flash Lite.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Batería de 8 ataques lanzados:}
+    \begin{itemize}
+        \item Suplantación de rol (Auditor) $\rightarrow$ Extracción de Prompt.
+        \item Técnica DAN $\rightarrow$ Jailbreaking.
+        \item Suplantación de autoridad $\rightarrow$ Modificación de precios.
+        \item \textit{Phishing}, ofuscación en Base64, etc.
+    \end{itemize}
+    
+    \textit{Resultado:} El modelo base resiste nativamente, pero depender solo de la "caja negra" es un riesgo inasumible en producción.
+\end{frame}
+
+% DIAPOSITIVA 7: PoC Defendida
+\begin{frame}{Prueba de Concepto (PoC) - NeMo Guardrails}
+    \framesubtitle{Capa de Seguridad Determinista}
+    
+    Se implementó \textbf{NeMo Guardrails} de NVIDIA definiendo reglas semánticas (\textit{Colang}).
+    
+    \vspace{0.3cm}
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular}{llc}
+            \toprule
+            \textbf{Ataque evaluado} & \textbf{Sin Guardrails} & \textbf{Con Guardrails} \\
+            \midrule
+            Extracción de System Prompt & \textcolor{gray}{FALLIDO} & \textcolor{red}{\textbf{BLOQUEADO}} \\
+            Jailbreak DAN & \textcolor{gray}{FALLIDO} & \textcolor{red}{\textbf{BLOQUEADO}} \\
+            Inyección con Delimitador & \textcolor{gray}{FALLIDO} & \textcolor{red}{\textbf{BLOQUEADO}} \\
+            Extracción por Base64 & \textcolor{gray}{FALLIDO} & \textcolor{red}{\textbf{BLOQUEADO}} \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \textbf{Ventaja clave:} El Guardrail intercepta el ataque \textbf{antes} de la inferencia del modelo. Ahorra cómputo y añade determinismo.
+\end{frame}
+
+% DIAPOSITIVA 8: Conclusiones
+\begin{frame}{Conclusiones}
+    
+    \begin{enumerate}
+        \item \textbf{Superficie de ataque única:}\\
+        La convergencia de código y datos en LLMs no puede mitigarse exclusivamente con instrucciones textuales.
+        
+        \vspace{0.4cm}
+        \item \textbf{Obligación legal y técnica:}\\
+        Las normativas (AI Act, RGPD) exigen robustez y mitigación. Ignorar el estado del arte puede considerarse negligencia.
+        
+        \vspace{0.4cm}
+        \item \textbf{Defensa en profundidad:}\\
+        Ninguna defensa es infalible por sí sola. Se requiere: Alineamiento + Prompts seguros + Mínimo privilegio + \textbf{Guardrails externos}.
+    \end{enumerate}
+    
+\end{frame}
+
+\end{document}
