@@ -116,6 +116,9 @@ Las causas raíz suelen ser tres:
 Se refiere al riesgo de que las instrucciones internas diseñadas para guiar el comportamiento del modelo contengan secretos o información sensible que sea descubierta por el usuario. OWASP enfatiza que el \textit{System Prompt} no debe considerarse un secreto ni un control de seguridad en sí mismo.
 El riesgo fundamental no es la revelación del texto del prompt, sino los elementos subyacentes que expone, tales como claves de API, estructuras de roles, permisos o reglas de filtrado internas. Una vez que un atacante conoce estas reglas, puede diseñar ataques de escalada de privilegios o inyecciones más precisas para eludir los guardrails del sistema.
 
+\subsection{Misinformation (LLM09)}
+Esta vulnerabilidad hace referencia a la capacidad del modelo para generar contenido falso, engañoso o directamente malicioso que los usuarios o sistemas dependientes puedan asumir como legítimo. En el contexto de agentes conversacionales integrados en entornos corporativos, este riesgo se materializa cuando un atacante manipula el modelo para generar, por ejemplo, campañas de ingeniería social o correos de \textit{phishing} simulados, instrumentalizando la confianza que proyecta el sistema. La mitigación de esta amenaza requiere controles estrictos en la validación de salidas (\textit{Output Guardrails}) y la restricción proactiva del contexto temático para evitar que el modelo responda a consultas fuera de su dominio operativo.
+
 \begin{table}[h]
 \centering
 \small
