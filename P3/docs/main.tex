@@ -1,0 +1,324 @@
+% !BIB program = biber
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[backend=biber, style=apa]{biblatex}
+\addbibresource{bibliografia.bib}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=cyan}
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\Large\textbf{Universidade da Coru\~na}\\[0.3cm]}
+{\large Facultade de Informática\\[0.2cm]}
+{\large Seguridad de los Sistemas Inteligentes\\[1.5cm]}
+\rule{\textwidth}{1pt}\\[0.5cm]
+{\LARGE\bfseries Práctica 3: Auditoría Integral\\[0.3cm]
+del Módulo PEDSAFE-Urban v1.9\\[0.3cm]
+(Vehículo Autónomo)}\\[0.5cm]
+\rule{\textwidth}{1pt}\\[1.5cm]
+{\large\textbf{Anexo II --- Sistema B}\\[1cm]}
+{\large
+Autor 1 --- a.serrano1@udc.es\\
+Autor 2 --- oscar.vilela.rodriguez@udc.es\\
+Autor 3 --- aldana.medina@udc.es\\[1cm]
+}
+{\large Grupo: G1.08\\[1cm]}
+{\large \today}
+\vfill
+\end{titlepage}
+\tableofcontents
+\newpage
+
+\section{Diseño del sistema y delimitación del alcance}
+
+\subsection{Caracterización funcional del sistema asignado}
+
+El sistema objeto de auditoría es el módulo \textbf{PEDSAFE-Urban v1.9}, desarrollado por UrbanMotion Perception GmbH e integrado en una lanzadera autónoma de baja velocidad operada por la Empresa Municipal de Movilidad de Bahía Azul. La lanzadera conecta una estación intermodal con un campus universitario a lo largo de un itinerario de 7,4\,km con 16 paradas, circulando a un máximo de 25\,km/h en convivencia con peatones, ciclistas, patinetes y vehículos de reparto.
+
+\paragraph{Finalidad prevista.} El sistema constituye una \textit{asistencia crítica a la percepción} cuya finalidad es: (1)~detectar peatones y usuarios vulnerables de la vía, (2)~estimar su trayectoria a corto plazo (2\,s), y (3)~generar una señal de prioridad de riesgo que alimenta el planificador del vehículo y el sistema de frenado preventivo. No gobierna directamente la dirección ni el frenado final, pero sus salidas condicionan de forma determinante las decisiones de conducción.
+
+\paragraph{Entradas.} 4~cámaras RGB exteriores, 1~lidar de 64 haces, 2~radares frontales de corto alcance, GNSS/IMU, mapa HD del itinerario, velocidad del vehículo, estado de calzada y limpiaparabrisas, y eventos V2X opcionales.
+
+\paragraph{Salidas.} Detecciones con \textit{bounding box} o clúster 3D, clasificación básica (peatón, ciclista, grupo, objeto desconocido), predicción de trayectoria, nivel de criticidad (bajo/medio/alto/crítico) y bandera para el planificador (monitorizar, desacelerar o frenado preventivo).
+
+\paragraph{Tipo de decisión.} Sistema de \textbf{apoyo a la decisión} con impacto directo en la seguridad física \parencite{amodei2016concrete}. Aunque formalmente no ejecuta el frenado, su clasificación de criticidad desencadena automáticamente acciones del planificador, lo que lo convierte en un componente de seguridad \textit{de facto}.
+
+\paragraph{Viabilidad para despliegue controlado.} El diseño actual \textbf{no permite iniciar un despliegue ampliado} desde el punto de vista de auditoría, por las siguientes razones críticas:
+\begin{itemize}[nosep]
+    \item La evidencia E7 muestra una latencia media de teleoperación de 2,8\,s (percentil~95: 4,1\,s), contradiciendo el requisito declarado en E1 de intervención en menos de 1,5\,s.
+    \item No existen métricas desagregadas de rendimiento para subgrupos vulnerables: peatones infantiles, usuarios con movilidad reducida ni grupos numerosos (E4).
+    \item El proveedor afirma degradación segura ante fallo de sensor (E1), pero no aporta pruebas de fallo simultáneo cámara~+~radar en entorno real.
+    \item Persisten vulnerabilidades de ciberseguridad abiertas: servicio SSH activo, usuario compartido y regla de firewall no cerrada (E10).
+\end{itemize}
+
+\paragraph{Alcance de la pre-auditoría.}
+\begin{itemize}[nosep]
+    \item \textbf{Dentro del alcance:} adquisición y sincronización de sensores, módulo de percepción PEDSAFE, módulo de criticidad, interfaz de supervisión remota, sistema de logs y almacenamiento de eventos, e integración con el planificador.
+    \item \textbf{Fuera del alcance:} infraestructura municipal V2X, sistema de ticketing, sistema de navegación punto a punto, motor eléctrico y freno físico, y mantenimiento mecánico general.
+\end{itemize}
+
+\paragraph{Incoherencias y lagunas detectadas.}
+\begin{enumerate}[nosep]
+    \item \textbf{Contradicción en tiempos de intervención:} E1 declara $<$1,5\,s; E7 mide 2,8\,s de media.
+    \item \textbf{Laguna en validación:} ausencia de métricas para subgrupos críticos (niños, sillas de ruedas, deslumbramiento solar).
+    \item \textbf{Laguna en degradación:} no hay evidencia de pruebas de fallo simultáneo multisensor.
+    \item \textbf{Incoherencia en seguridad de red:} E10 declara segmentación, pero el hardening revela SSH abierto y firewall sin cerrar.
+    \item \textbf{Laguna en transparencia:} E11 confirma que no existe información interior sobre grabación ni procedimiento de reclamación algorítmica.
+    \item \textbf{Laguna en datos de entrenamiento:} la documentación no desglosa la representación de escenarios adversos (lluvia, obras, oclusión).
+\end{enumerate}
+
+\subsection{Actores, ciclo de vida y evidencias mínimas}
+
+\paragraph{Actores principales.}
+\begin{itemize}[nosep]
+    \item \textbf{Proveedor:} UrbanMotion Perception GmbH --- desarrolla PEDSAFE, distribuye pesos del modelo y emite boletines de actualización.
+    \item \textbf{Integrador:} Navia Systems Integration Iberia --- integra sensores, red interna, planificador y telemetría.
+    \item \textbf{Organización usuaria (\textit{deployer}):} Empresa Municipal de Movilidad de Bahía Azul --- responsable de operación, gestión de datos y decisión de despliegue.
+    \item \textbf{Operadores humanos:} supervisor remoto del centro de control, personal de seguridad a bordo (fase piloto) y personal técnico de mantenimiento.
+    \item \textbf{Mantenedores:} proveedor del módulo, integrador y taller autorizado.
+    \item \textbf{Personas afectadas:} peatones, ciclistas, pasajeros, usuarios vulnerables de la vía y residentes grabados incidentalmente por cámaras exteriores.
+\end{itemize}
+
+\paragraph{Mapa del ciclo de vida y evidencias mínimas.}
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{l X X}
+\toprule
+\textbf{Fase} & \textbf{Descripción} & \textbf{Evidencias mínimas requeridas} \\ \midrule
+Datos & 3,1M frames europeos. Sin desglose de escenarios adversos. & Ficha técnica del dataset, distribución demográfica y geográfica, análisis de sesgos. \\ \addlinespace
+Entrenamiento & Centralizado por proveedor; ajuste fino local opcional. & Hiperparámetros, métricas de convergencia, trazabilidad de versiones de pesos. \\ \addlinespace
+Validación & Pista cerrada y vía real con conductor. Recall global 0,94. & Protocolo de pruebas, métricas desagregadas por subgrupo, informe de casos límite. \\ \addlinespace
+Despliegue & OTA mensual (software) y trimestral (pesos). Rollback contractual. & Registro de despliegues, acta de validación pre-activación, log de rollbacks. \\ \addlinespace
+Operación & Servicio 07:00--22:00 con supervisión remota y telemetría. & Logs operacionales, registro de incidentes, KPIs de disponibilidad y latencia. \\ \addlinespace
+Mantenimiento & Calibración semanal, actualizaciones remotas, sustitución preventiva. & Registro de calibraciones, histórico de parches, auditoría de accesos. \\ \bottomrule
+\end{tabularx}
+\caption{Ciclo de vida del sistema PEDSAFE-Urban y evidencias mínimas de auditabilidad.}
+\end{table}
+
+
+\section{Evaluación ética y cumplimiento preliminar}
+
+\subsection{Análisis ético aplicado y tensiones}
+
+Se aplica la lógica \textbf{principio $\rightarrow$ riesgo $\rightarrow$ pregunta de auditoría $\rightarrow$ evidencia} a los seis ejes requeridos, siguiendo la metodología ALTAI \parencite{altai2020} y el marco de gestión de riesgos del NIST \parencite{nistrmf}.
+
+\paragraph{1. Supervisión humana.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} La retirada del asistente de seguridad a bordo (E12) deja la supervisión exclusivamente en manos de un operador remoto con latencia real de 2,8\,s (E7), muy superior al requisito de 1,5\,s (E1).
+    \item \textit{Pregunta de auditoría:} ¿Puede el operador remoto intervenir de forma efectiva ante una detección fallida en condiciones adversas?
+    \item \textit{Evidencia:} Insuficiente. E7 contradice E1; no existe protocolo documentado de intervención para escenarios de fallo de percepción con latencia degradada.
+\end{itemize}
+
+\paragraph{2. Privacidad y gobernanza de datos.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} Las cámaras exteriores capturan incidentalmente rostros, matrículas y trayectorias de transeúntes. El dataset de mejora se retiene hasta 12 meses (E8) y no consta información visible sobre la reutilización de datos para reentrenamiento.
+    \item \textit{Pregunta de auditoría:} ¿Se ha realizado una Evaluación de Impacto en Protección de Datos (EIPD) conforme al artículo~35 del RGPD \parencite{eu2016rgpd}?
+    \item \textit{Evidencia:} Ausente. E8 describe retención pero no menciona EIPD, base legitimadora ni mecanismo de anonimización.
+\end{itemize}
+
+\paragraph{3. Transparencia y explicabilidad.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} No existe panel interior que informe a pasajeros ni peatones sobre el uso de cámaras y la toma de decisiones automatizada (E11). Tampoco hay procedimiento de reclamación algorítmica.
+    \item \textit{Pregunta de auditoría:} ¿Puede una persona afectada por una decisión del sistema (p.~ej., frenada brusca) comprender qué la motivó y ejercer su derecho a reclamación?
+    \item \textit{Evidencia:} Ausente. Solo existe un rótulo exterior genérico (``Vehículo automatizado en pruebas'').
+\end{itemize}
+
+\paragraph{4. Equidad y no discriminación.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} No se aportan métricas desagregadas para peatones infantiles, usuarios en silla de ruedas ni grupos numerosos (E4). El recall con lluvia intensa cae al 0,76 frente al 0,94 global, afectando desproporcionadamente a quienes transitan en condiciones adversas.
+    \item \textit{Pregunta de auditoría:} ¿Se ha evaluado si el sistema presenta sesgos de detección correlacionados con características protegidas (edad, discapacidad, estatura)? Investigaciones previas han demostrado que los sistemas de visión artificial presentan disparidades significativas según características demográficas \parencite{buolamwini2018gender}.
+    \item \textit{Evidencia:} Ausente. No consta evaluación de equidad ni análisis de subgrupos.
+\end{itemize}
+
+\paragraph{5. Responsabilidad.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} La cadena de responsabilidad está fragmentada entre proveedor (modelo), integrador (vehículo) y operador (despliegue). Ante un incidente como E5, la atribución causal se reparte entre oclusión (percepción), mapa desactualizado (integrador) y latencia de cámara (hardware).
+    \item \textit{Pregunta de auditoría:} ¿Existe un acuerdo contractual que defina responsabilidades y obligaciones de notificación ante incidentes graves?
+    \item \textit{Evidencia:} Insuficiente. El contrato menciona rollback (E9) pero no consta matriz RACI de incidentes ni protocolo de notificación a autoridades.
+\end{itemize}
+
+\paragraph{6. Seguridad y prevención del daño.}
+\begin{itemize}[nosep]
+    \item \textit{Riesgo:} Los falsos positivos en zonas de obras (+29\,\%, E4) generan frenadas bruscas que ponen en riesgo a los pasajeros. Simultáneamente, el recall nocturno de 0,81 implica que casi 1 de cada 5 peatones nocturnos podría no ser detectado.
+    \item \textit{Pregunta de auditoría:} ¿Se ha definido un umbral de rendimiento mínimo aceptable por escenario operativo, y qué ocurre cuando no se alcanza?
+    \item \textit{Evidencia:} Parcial. E3 define un umbral de confianza (0,55 durante 500\,ms) para modo mínimo de riesgo, pero no existe política de restricción operativa por condiciones meteorológicas.
+\end{itemize}
+
+\paragraph{Decisiones revisables por operador humano.} Deberían poder ser revisadas o anuladas: (1)~la activación de frenado preventivo en zonas de obras, donde el ratio de falsos positivos es elevado; (2)~la transición a modo mínimo de riesgo, que afecta directamente al servicio de pasajeros; y (3)~la activación de pesos nuevos del modelo tras una OTA, que modifica el comportamiento de percepción.
+
+\paragraph{Información mínima para transparencia.} Para considerarse mínimamente transparente, el sistema debería comunicar: (a)~a los pasajeros, la naturaleza automatizada de la conducción y los sensores activos; (b)~a los peatones y residentes, la existencia de videograbación y su finalidad; (c)~a los operadores, las métricas en tiempo real de confianza del sistema y los umbrales de degradación.
+
+\paragraph{Tensiones principales.}
+\begin{enumerate}[nosep]
+    \item \textbf{Utilidad operativa vs.\ seguridad:} El operador quiere pasar a operación ampliada en 6 semanas, pero los peores resultados de percepción coinciden con los escenarios de mayor riesgo (lluvia, noche, obras).
+    \item \textbf{Privacidad vs.\ seguridad:} Retener vídeo exterior más tiempo mejora la investigación de incidentes, pero incrementa el riesgo de tratamiento excesivo de datos personales sin base legitimadora clara.
+    \item \textbf{Supervisión humana vs.\ coste operativo:} Retirar al asistente a bordo reduce costes, pero degrada críticamente la capacidad de intervención ante fallos de percepción, especialmente con la latencia real de teleoperación documentada.
+\end{enumerate}
+
+\subsection{Clasificación regulatoria preliminar}
+
+\paragraph{Clasificación bajo el AI Act.} El módulo PEDSAFE-Urban constituye un \textbf{sistema de IA de alto riesgo} conforme al Reglamento (UE) 2024/1689 \parencite{eu2024aiact}, por dos vías convergentes:
+\begin{enumerate}[nosep]
+    \item \textbf{Artículo 6.1:} Es un componente de seguridad de un producto (vehículo de motor) sujeto a la legislación de armonización del Anexo~I, concretamente al Reglamento (UE) 2018/858 de homologación de vehículos \parencite{eu2018motor}.
+    \item \textbf{Anexo III, área 2:} Sistema de IA destinado a la gestión y operación de \textit{infraestructura crítica de transporte por carretera}, cuyo fallo puede poner en riesgo la vida y salud de las personas.
+\end{enumerate}
+
+El sistema es \textbf{especialmente sensible} porque: (a)~sus decisiones afectan a la integridad física de peatones y pasajeros que no han consentido interactuar con el sistema; (b)~opera en vía pública compartida con usuarios vulnerables; y (c)~la retirada del asistente a bordo elimina la última barrera física de seguridad.
+
+\paragraph{Obligaciones clave y evidencia verificadora.}
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{l l X X}
+\toprule
+\textbf{Art.} & \textbf{Obligación} & \textbf{Evidencia necesaria} & \textbf{Estado} \\ \midrule
+Art.~9 & Sistema de gestión de riesgos iterativo & Registro de riesgos actualizado, análisis de escenarios adversos & Insuficiente: no hay análisis de fallo multisensor \\ \addlinespace
+Art.~10 & Gobernanza de datos de entrenamiento & Ficha del dataset con distribución por subgrupos, análisis de sesgos & Ausente: sin desglose demográfico ni de escenarios \\ \addlinespace
+Art.~13 & Transparencia hacia el \textit{deployer} & Manual de uso con limitaciones conocidas, rendimiento por escenario & Insuficiente: ficha comercial genérica (E1) \\ \addlinespace
+Art.~14 & Supervisión humana efectiva & Protocolo de intervención, métricas de latencia, capacidad real de anulación & Insuficiente: latencia real contradice requisito (E7 vs.\ E1) \\ \addlinespace
+Art.~15 & Precisión, robustez y ciberseguridad & Métricas desagregadas, pruebas adversariales, auditoría de red & Insuficiente: SSH abierto, firewall sin cerrar (E10) \\ \bottomrule
+\end{tabularx}
+\caption{Obligaciones del AI Act seleccionadas y estado de la evidencia para PEDSAFE-Urban.}
+\end{table}
+
+
+\section{Robustez, seguridad y dictamen final}
+
+\subsection{Registro integrado de riesgos, amenazas, controles y evidencia}
+
+Se construye un registro de seis riesgos que cubre las tres categorías exigidas: accidentales/funcionales (R1--R2), adversarios (R3--R4) y éticos/de gobernanza (R5--R6). La evaluación sigue los principios de la norma ISO~21448 (SOTIF) \parencite{iso21448} para riesgos funcionales, las directrices de ENISA \parencite{enisa2021threat} para amenazas adversarias, y la ISO/IEC~27001 \parencite{iso27001} para controles de ciberseguridad.
+
+\paragraph{R1. Fallo de detección nocturna de peatón (accidental).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Operación.
+    \item \textit{Activo afectado:} Módulo de percepción PEDSAFE.
+    \item \textit{Fuente de fallo:} Degradación del rendimiento de la red neuronal con baja luminosidad; recall nocturno de solo 0,81 (E4).
+    \item \textit{Superficie de vulnerabilidad:} Pipeline de fusión sensorial cámara-lidar en condiciones de iluminación insuficiente.
+    \item \textit{Amenaza:} Peatón no detectado o detectado tardíamente, con frenado insuficiente.
+    \item \textit{Impacto:} Colisión con peatón; daño físico grave o fatal.
+    \item \textit{Criticidad:} \textbf{Crítica.}
+    \item \textit{Responsable de mitigación:} Proveedor (mejora del modelo) y operador (restricción operativa).
+    \item \textit{Control propuesto:} Implementar política de restricción de velocidad automática ($\leq$15\,km/h) en horario nocturno y condiciones de baja visibilidad, complementada con iluminación IR activa.
+    \item \textit{Evidencia para verificar el control:} Registros de velocidad segmentados por franja horaria y condiciones lumínicas, informe de validación nocturna con métricas desagregadas.
+    \item \textit{Estado de la evidencia:} \textbf{Ausente} --- no existen métricas nocturnas desagregadas ni política de restricción.
+\end{itemize}
+
+\paragraph{R2. Falsos positivos masivos en zonas de obras (accidental).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Operación.
+    \item \textit{Activo afectado:} Módulo de criticidad y planificador.
+    \item \textit{Fuente de fallo:} Clasificación errónea de vallas reflectantes como peatones en movimiento; +29\,\% de falsos positivos en obras (E4, E6).
+    \item \textit{Superficie de vulnerabilidad:} Clasificador de objetos ante materiales retroreflectantes no representados en el dataset.
+    \item \textit{Amenaza:} Frenadas bruscas innecesarias que causan lesiones a pasajeros o accidentes con vehículos siguientes.
+    \item \textit{Impacto:} Lesiones leves a moderadas a pasajeros; pérdida de confianza del público.
+    \item \textit{Criticidad:} \textbf{Alta.}
+    \item \textit{Responsable de mitigación:} Proveedor (reentrenamiento) e integrador (actualización del mapa HD).
+    \item \textit{Control propuesto:} Enriquecer el dataset con escenas de obras urbanas con materiales reflectantes; integrar la información del mapa HD actualizado como contexto para suprimir detecciones en zonas de obra señalizadas.
+    \item \textit{Evidencia para verificar el control:} Informe de reentrenamiento con métricas de falsos positivos en escenas de obra, registro de actualización del mapa HD.
+    \item \textit{Estado de la evidencia:} \textbf{Insuficiente} --- el incidente E6 está documentado pero no consta plan de corrección.
+\end{itemize}
+
+\paragraph{R3. Inyección de señales adversarias en sensores (adversario).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Operación.
+    \item \textit{Activo afectado:} Sensores lidar y cámaras.
+    \item \textit{Actor adversario:} Atacante con acceso físico al entorno del itinerario.
+    \item \textit{Superficie de ataque:} Señales ópticas e infrarrojas captadas por los sensores exteriores del vehículo.
+    \item \textit{Amenaza:} Inyección de puntos lidar falsos (\textit{spoofing}) o colocación de parches adversariales físicos que fuercen clasificaciones erróneas, provocando frenadas o ceguera ante obstáculos reales.
+    \item \textit{Impacto:} Colisión o parada del servicio; riesgo de daño físico.
+    \item \textit{Criticidad:} \textbf{Alta.}
+    \item \textit{Responsable de mitigación:} Proveedor (robustez del modelo) e integrador (validación cruzada multisensor).
+    \item \textit{Control propuesto:} Implementar verificación cruzada obligatoria entre lidar, radar y cámara antes de elevar criticidad a ``alto'' o ``crítico''; entrenar el modelo con ejemplos adversariales.
+    \item \textit{Evidencia para verificar el control:} Informe de pruebas de robustez adversarial, protocolo de fusión sensorial con votación mayoritaria documentada.
+    \item \textit{Estado de la evidencia:} \textbf{Ausente} --- no constan pruebas adversariales ni protocolo de votación multisensor.
+\end{itemize}
+
+\paragraph{R4. Acceso no autorizado a la unidad de percepción (adversario).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Operación / Mantenimiento.
+    \item \textit{Activo afectado:} Unidad de percepción y pesos del modelo.
+    \item \textit{Actor adversario:} Atacante remoto o técnico malintencionado.
+    \item \textit{Superficie de ataque:} Servicio SSH activo con usuario ``maintenance'' compartido y regla de firewall temporal no cerrada (E10).
+    \item \textit{Amenaza:} Modificación de pesos del modelo o de umbrales de criticidad, provocando degradación silenciosa del sistema de seguridad.
+    \item \textit{Impacto:} Compromiso de la integridad del sistema de percepción; posible sabotaje con consecuencias físicas.
+    \item \textit{Criticidad:} \textbf{Crítica.}
+    \item \textit{Responsable de mitigación:} Integrador (hardening) y operador (auditoría de accesos).
+    \item \textit{Control propuesto:} Deshabilitar SSH y sustituirlo por acceso basado en certificados individuales; cerrar la regla de firewall temporal; implementar autenticación multifactor y registro inmutable de accesos.
+    \item \textit{Evidencia para verificar el control:} Informe de auditoría de puertos y servicios, registro de accesos con trazabilidad individual, acta de cierre de reglas temporales.
+    \item \textit{Estado de la evidencia:} \textbf{Evidencia no verificable} --- E10 documenta la vulnerabilidad pero no consta acción correctiva ni fecha de remediación.
+\end{itemize}
+
+\paragraph{R5. Discriminación algorítmica contra usuarios vulnerables (ético/gobernanza).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Datos / Validación.
+    \item \textit{Activo afectado:} Dataset de entrenamiento y métricas de validación.
+    \item \textit{Fuente de fallo:} Infrarrepresentación de peatones infantiles, usuarios en silla de ruedas y personas con ayudas técnicas en el dataset (E4, Sección~7 del Anexo).
+    \item \textit{Superficie de vulnerabilidad:} Distribución del dataset de entrenamiento.
+    \item \textit{Amenaza:} El sistema protege menos eficazmente a los colectivos más vulnerables de la vía pública, generando un sesgo de seguridad con impacto discriminatorio.
+    \item \textit{Impacto:} Vulneración del principio de no discriminación (Art.~10 AI Act); riesgo de daño físico desproporcionado a menores y personas con discapacidad.
+    \item \textit{Criticidad:} \textbf{Crítica.}
+    \item \textit{Responsable de mitigación:} Proveedor (dataset) y operador (exigencia contractual de métricas desagregadas).
+    \item \textit{Control propuesto:} Exigir contractualmente al proveedor métricas desagregadas de recall por subgrupo demográfico y tipo corporal; incluir en el protocolo de validación local escenas con figurantes representativos.
+    \item \textit{Evidencia para verificar el control:} Ficha del dataset con distribución demográfica, informe de validación con métricas desagregadas por subgrupo.
+    \item \textit{Estado de la evidencia:} \textbf{Ausente} --- no consta evaluación de equidad ni análisis de subgrupos.
+\end{itemize}
+
+\paragraph{R6. Tratamiento de datos personales sin base legitimadora (ético/gobernanza).}
+\begin{itemize}[nosep]
+    \item \textit{Fase:} Operación / Datos.
+    \item \textit{Activo afectado:} Grabaciones de vídeo exterior y dataset de reentrenamiento.
+    \item \textit{Fuente de fallo:} Captura incidental de rostros, matrículas y trayectorias sin información al interesado ni EIPD (E8, E11).
+    \item \textit{Superficie de vulnerabilidad:} Política de retención y reutilización de datos para mejora del modelo.
+    \item \textit{Amenaza:} Incumplimiento del RGPD (arts.~13, 14, 35) y del AI Act (art.~10); posible sanción administrativa y daño reputacional.
+    \item \textit{Impacto:} Sanción de hasta el 4\,\% de la facturación global; pérdida de licencia de operación.
+    \item \textit{Criticidad:} \textbf{Alta.}
+    \item \textit{Responsable de mitigación:} Operador (EIPD y transparencia) y proveedor (anonimización del dataset).
+    \item \textit{Control propuesto:} Realizar EIPD conforme al art.~35 RGPD; implementar anonimización automática (difuminado de rostros y matrículas) antes de la transmisión al proveedor; instalar cartelería informativa en paradas y panel interior.
+    \item \textit{Evidencia para verificar el control:} EIPD completada y aprobada, informe técnico de anonimización, fotografía o diseño de la cartelería instalada.
+    \item \textit{Estado de la evidencia:} \textbf{Ausente} --- no consta EIPD, anonimización ni cartelería informativa.
+\end{itemize}
+
+\paragraph{Riesgos residuales.} Incluso tras la aplicación de todos los controles propuestos, persistirían los siguientes riesgos residuales relevantes:
+\begin{enumerate}[nosep]
+    \item \textbf{Escenarios no cubiertos por el dataset:} Nuevas configuraciones urbanas (obras atípicas, eventos masivos) seguirán generando situaciones fuera de distribución que ningún modelo puede anticipar completamente.
+    \item \textbf{Latencia irreducible de teleoperación:} Aun optimizando la red 5G, la supervisión remota tendrá siempre un retardo inherente que la hace insuficiente como única barrera ante fallos instantáneos de percepción.
+    \item \textbf{Evolución adversarial:} Los ataques de spoofing sensorial evolucionarán, requiriendo actualización continua de las defensas.
+\end{enumerate}
+
+\subsection{Dictamen final de despliegue}
+
+\begin{center}
+\fbox{\Large\textbf{APTO SOLO CON CONDICIONES PREVIAS}}
+\end{center}
+
+\paragraph{Justificación.} El sistema PEDSAFE-Urban v1.9 demuestra capacidades técnicas relevantes (recall global 0,94, arquitectura de fusión multisensor, modo mínimo de riesgo definido) que acreditan un diseño fundamentalmente sólido. Sin embargo, las deficiencias documentadas en supervisión humana, equidad, ciberseguridad y transparencia impiden un despliegue ampliado en su estado actual.
+
+\paragraph{Tres hallazgos principales.}
+\begin{enumerate}[nosep]
+    \item \textbf{H1 --- Supervisión humana insuficiente:} La contradicción entre el requisito de intervención ($<$1,5\,s, E1) y la latencia real (2,8\,s media, E7), combinada con la retirada prevista del asistente a bordo (E12), genera una brecha crítica de seguridad que incumple el artículo~14 del AI Act.
+    \item \textbf{H2 --- Ausencia de evaluación de equidad:} No existen métricas desagregadas para los subgrupos más vulnerables (niños, usuarios con movilidad reducida), lo que impide verificar el cumplimiento del artículo~10 del AI Act y genera un riesgo de discriminación algorítmica con impacto en la seguridad física.
+    \item \textbf{H3 --- Vulnerabilidades de ciberseguridad abiertas:} El servicio SSH activo, el usuario compartido y la regla de firewall no cerrada (E10) constituyen vectores de ataque que podrían comprometer la integridad del modelo de percepción, incumpliendo el artículo~15 del AI Act.
+\end{enumerate}
+
+\paragraph{Riesgo residual más relevante.} La \textbf{latencia irreducible de la supervisión remota} como única barrera de seguridad tras la retirada del asistente a bordo. Ningún control técnico puede garantizar que un operador remoto reaccione a tiempo ante un fallo instantáneo de percepción en un entorno con peatones.
+
+\paragraph{Tres acciones prioritarias antes del despliegue.}
+\begin{enumerate}[nosep]
+    \item \textbf{A1 --- Mantener asistente de seguridad a bordo} hasta que la latencia de teleoperación se reduzca de forma verificable por debajo de 1,5\,s (percentil~95) y se valide mediante simulacros documentados de intervención.
+    \item \textbf{A2 --- Exigir al proveedor y ejecutar validación con métricas desagregadas} de recall para peatones infantiles, usuarios en silla de ruedas, grupos numerosos y condiciones de deslumbramiento, estableciendo umbrales mínimos de aceptación por subgrupo.
+    \item \textbf{A3 --- Remediar las vulnerabilidades de ciberseguridad} (cerrar SSH, eliminar usuario compartido, cerrar regla de firewall) y realizar una auditoría de seguridad de red completa con verificación independiente antes de reanudar la operación comercial.
+\end{enumerate}
+
+
+
+\section{Referencias bibliográficas}
+\printbibliography[heading=none]
+\end{document}
