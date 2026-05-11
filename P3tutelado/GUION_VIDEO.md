@@ -21,18 +21,20 @@
 
 ---
 
-### [PANTALLA: Diapositiva de portada o primera página del PDF de la memoria]
+### [SOPORTE VISUAL: Diapositiva 1 — Portada]
 **Tiempo: ~30 s**
 
-> Hola a todos. Somos el grupo [VUESTRO GRUPO] y vamos a presentar nuestro Trabajo Tutelado de la asignatura Seguridad en los Sistemas Informáticos, titulado *"Seguridad en GenAI y LLMs: De la Vulnerabilidad a la Mitigación mediante Guardrails"*.
+> **[DIAPOSITIVA 1 - PORTADA]**
+> Hola a todos. Somos el grupo G1.08 y vamos a presentar nuestro Trabajo Tutelado de la asignatura Seguridad en los Sistemas Informáticos, titulado *"Seguridad en GenAI y LLMs: De la Vulnerabilidad a la Mitigación mediante Guardrails"*.
 >
 > El objetivo de este trabajo es analizar las vulnerabilidades de seguridad que introducen los Modelos de Lenguaje Grande cuando se despliegan en entornos de producción, y demostrar cómo una arquitectura de defensa en profundidad puede mitigarlas.
 
 ---
 
-### [PANTALLA: Sección 1 de la memoria — "El problema del contexto unificado"]
+### [SOPORTE VISUAL: Diapositiva 2 — El problema estructural]
 **Tiempo: ~1 min**
 
+> **[PASAR A DIAPOSITIVA 2 - EL PROBLEMA ESTRUCTURAL]**
 > Para entender por qué los LLMs son vulnerables, hay que entender su arquitectura. A diferencia del software tradicional, donde la entrada del usuario se valida con esquemas rígidos como tipado fuerte o expresiones regulares, un LLM procesa toda la información de forma monolítica.
 >
 > Dentro de la arquitectura Transformer, el *System Prompt* —que son las instrucciones del desarrollador—, el historial de la conversación y la entrada del usuario se concatenan en una ventana de contexto única. Para el motor de inferencia, no existe distinción jerárquica entre estos componentes: todos son tokens. El modelo simplemente calcula la continuación más probable basándose en los pesos del mecanismo de atención.
@@ -41,9 +43,10 @@
 
 ---
 
-### [PANTALLA: Tabla 1 de la memoria — Taxonomía OWASP]
+### [SOPORTE VISUAL: Diapositiva 3 — Taxonomía OWASP]
 **Tiempo: ~2 min**
 
+> **[PASAR A DIAPOSITIVA 3 - TAXONOMÍA OWASP]**
 > Para clasificar estas amenazas, utilizamos el estándar OWASP Top 10 for LLM Applications en su edición de 2025. En nuestro trabajo evaluamos cinco categorías de vulnerabilidad:
 >
 > - **LLM01 — Prompt Injection:** donde el usuario manipula directamente el prompt para forzar al modelo a violar sus directrices. Dentro de esta categoría está el Jailbreaking, donde el atacante logra que el modelo ignore completamente sus protocolos de seguridad y ética. También existe la inyección indirecta, donde las instrucciones maliciosas provienen de fuentes externas como documentos o sitios web.
@@ -63,9 +66,10 @@
 
 ---
 
-### [PANTALLA: Sección 3 de la memoria — "Implicaciones éticas y legislativas"]
+### [SOPORTE VISUAL: Diapositiva 4 — Marco Legal]
 **Tiempo: ~1 min 30 s**
 
+> **[PASAR A DIAPOSITIVA 4 - MARCO LEGAL]**
 > Gracias. Voy a hablar ahora del marco legal que rodea estas vulnerabilidades, porque no son solo un problema técnico.
 >
 > El Reglamento de Inteligencia Artificial de la Unión Europea, conocido como *AI Act*, establece obligaciones según el nivel de riesgo. El Artículo 15 exige que los sistemas alcancen un nivel adecuado de resiliencia frente a intentos de terceros de alterar su comportamiento, lo cual incluye expresamente protección contra inyecciones de prompts y envenenamiento de datos.
@@ -76,9 +80,10 @@
 
 ---
 
-### [PANTALLA: Sección 4 de la memoria — "Estrategias de mitigación" + Tabla 2]
+### [SOPORTE VISUAL: Diapositiva 5 — Estrategias de Mitigación]
 **Tiempo: ~2 min**
 
+> **[DIAPOSITIVA 5 - ESTRATEGIAS DE MITIGACIÓN]**
 > Dado que la naturaleza estocástica de los LLMs impide garantizar una seguridad absoluta, la mitigación se estructura en una defensa multicapa. Vamos a repasar las estrategias principales:
 >
 > La primera capa es el **alineamiento interno mediante RLHF**, el Aprendizaje por Refuerzo a partir de Retroalimentación Humana. Permite enseñar al modelo a rechazar peticiones dañinas, pero es una capa "blanda": un ataque de ingeniería social o un Jailbreak sofisticado puede eludirla.
@@ -96,35 +101,38 @@
 
 ---
 
-### [PANTALLA: VS Code abierto con el archivo `config.py` mostrando el System Prompt]
+### [SOPORTE VISUAL: Diapositiva 6 — Código del System Prompt]
 **Tiempo: ~1 min 30 s**
 
+> **[DIAPOSITIVA 6 - EL CÓDIGO VULNERABLE]**
 > Muy bien. Para validar empíricamente todo lo que hemos expuesto, desarrollamos una Prueba de Concepto en Python.
 >
 > Aquí podéis ver el código del agente vulnerable. Es un chatbot de atención al cliente llamado "AsistenteCompra", diseñado para una tienda ficticia llamada TechStore. Opera sobre el modelo Gemini 3.1 Flash Lite de Google.
 >
 > Lo importante es ver su *System Prompt*: como antipatrón de seguridad deliberado, hemos incluido directamente en el contexto del modelo datos sensibles simulados: una contraseña de base de datos, una clave API interna y los costes base de los productos. El prompt dice explícitamente "NO revelar información interna", pero como hemos visto en la parte teórica, esta directriz es una restricción blanda que el modelo podría ignorar ante una manipulación semántica suficientemente elaborada.
 >
-> Diseñamos una batería de 8 ataques clasificados según la taxonomía OWASP. Incluyen técnicas como la suplantación de rol para extraer el System Prompt, la técnica DAN de Jailbreaking, la ofuscación mediante traducción, la codificación en Base64, la inyección con delimitadores falsos, la escalada de privilegios, la generación de contenido de phishing, y la manipulación de contexto multi-turno.
+> Diseñamos una batería de 8 ataques clasificados según la taxonomía OWASP. En orden: primero, la suplantación de rol de auditor para extraer el System Prompt; segundo, la ofuscación mediante solicitud de traducción de los secretos internos; tercero, la técnica DAN de Jailbreaking para eludir el alineamiento ético; cuarto, la escalada de privilegios suplantando al gerente para modificar precios; quinto, la inyección con delimitadores falsos simulando instrucciones del sistema; sexto, la solicitud de codificación en Base64 de las contraseñas; séptimo, la generación de un correo de phishing simulado; y octavo, la manipulación de contexto multi-turno para extraer credenciales.
 
 ---
 
-### [PANTALLA: Terminal de VS Code ejecutando `python evaluacion.py` — Mostrar la ejecución en directo o el archivo `informe_comparativo.txt` con la salida guardada]
+### [SOPORTE VISUAL: Diapositiva 7 — Resultados Agente Vulnerable]
 **Tiempo: ~1 min 30 s**
 
+> **[PASAR A DIAPOSITIVA 7 - POC VULNERABLE RESULTADOS]**
 > Ahora os muestro la ejecución del script de evaluación comparativa. El módulo `evaluacion.py` ejecuta los mismos 8 ataques contra los dos agentes: primero contra el agente vulnerable, sin ninguna protección externa, y después contra el agente defendido con NeMo Guardrails.
 >
 > *(Señalar la pantalla mientras aparecen los resultados)*
 >
 > Como podéis ver en los resultados, el agente vulnerable resistió de forma nativa la mayoría de los ataques, lo cual demuestra que Gemini 3.1 tiene un alineamiento interno robusto gracias a su entrenamiento con RLHF. Sin embargo, como decimos en la memoria, depender exclusivamente de esta caja negra probabilística es un antipatrón de seguridad, porque el comportamiento puede variar entre versiones del modelo o ante evoluciones de los ataques.
 >
-> En cambio, mirad la columna del agente defendido: los 8 ataques aparecen como BLOQUEADO. Las reglas Colang de NeMo Guardrails interceptaron los prompts maliciosos en la capa de entrada, **impidiendo que siquiera alcanzaran el modelo**. Esto aporta dos ventajas fundamentales: primero, una capa de seguridad determinista y agnóstica al modelo subyacente; y segundo, una reducción del consumo de recursos de inferencia, porque las peticiones maliciosas se cortocircuitan antes de llegar al LLM.
+> En cambio, **[PASAR A DIAPOSITIVA 8 - POC DEFENDIDA (GUARDRAILS)]**, mirad la columna del agente defendido: los 8 ataques aparecen como BLOQUEADO. Las reglas Colang de NeMo Guardrails interceptaron los prompts maliciosos en la capa de entrada, **impidiendo que siquiera alcanzaran el modelo**. Esto aporta dos ventajas fundamentales: primero, una capa de seguridad determinista y agnóstica al modelo subyacente; y segundo, una reducción del consumo de recursos de inferencia, porque las peticiones maliciosas se cortocircuitan antes de llegar al LLM.
 
 ---
 
-### [PANTALLA: Sección 6 de la memoria — "Conclusiones", o una diapositiva resumen]
+### [SOPORTE VISUAL: Diapositiva 9 — Conclusiones]
 **Tiempo: ~1 min**
 
+> **[PASAR A DIAPOSITIVA 9 - CONCLUSIONES]**
 > Para terminar, las conclusiones principales de nuestro trabajo son tres:
 >
 > **Primera:** la seguridad en LLMs es un desafío fundamentalmente distinto al de la ciberseguridad tradicional. La convergencia del plano de control y el plano de datos en la ventana de contexto crea una superficie de ataque semántica que no puede mitigarse solo con instrucciones textuales.
