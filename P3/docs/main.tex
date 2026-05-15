@@ -54,7 +54,7 @@ El sistema objeto de auditoría es el módulo \textbf{PEDSAFE-Urban v1.9}, desar
 \begin{itemize}[nosep]
     \item La evidencia E7 muestra una latencia media de teleoperación de 2,8\,s (percentil~95: 4,1\,s), contradiciendo el requisito declarado en E1 de intervención en menos de 1,5\,s.
     \item No existen métricas desagregadas de rendimiento para subgrupos vulnerables: peatones infantiles, usuarios con movilidad reducida ni grupos numerosos (E4).
-    \item El proveedor afirma degradación segura ante fallo de sensor (E1), pero no aporta pruebas de fallo simultáneo cámara~+~radar en entorno real.
+    \item El proveedor afirma degradación segura ante fallo de sensor (E1), pero no aporta pruebas de fallo simultáneo cámara y radar en entorno real.
     \item Persisten vulnerabilidades de ciberseguridad abiertas: servicio SSH activo, usuario compartido y regla de firewall no cerrada (E10).
 \end{itemize}
 
@@ -75,6 +75,7 @@ El sistema objeto de auditoría es el módulo \textbf{PEDSAFE-Urban v1.9}, desar
 \end{enumerate}
 
 \subsection{Actores, ciclo de vida y evidencias mínimas}
+En esta sección se han aplicado los conceptos del tema \textit{Methodologies for Auditing AI Systems} para el mapeo del sistema, así como la identificación de activos y adversarios vista en el tema \textit{Introduction to Artificial Intelligence Threat Modelling}. A continuación se detallan los actores y el ciclo de vida:
 
 \paragraph{Actores principales.}
 \begin{itemize}[nosep]
@@ -108,7 +109,7 @@ Mantenimiento & Calibración semanal, actualizaciones remotas, sustitución prev
 
 \subsection{Análisis ético aplicado y tensiones}
 
-Se aplica la lógica \textbf{principio $\rightarrow$ riesgo $\rightarrow$ pregunta de auditoría $\rightarrow$ evidencia} a los seis ejes requeridos, siguiendo la metodología ALTAI \parencite{altai2020} y el marco de gestión de riesgos del NIST \parencite{nistrmf}.
+Se aplica la lógica \textbf{principio $\rightarrow$ riesgo $\rightarrow$ pregunta de auditoría $\rightarrow$ evidencia} a los seis ejes requeridos, siguiendo la metodología ALTAI \parencite{altai2020}, abordada en el tema \textit{Introducción a los aspectos éticos y legales de la IA}, y el marco de gestión de riesgos del NIST \parencite{nistrmf}.
 
 \paragraph{1. Supervisión humana.}
 \begin{itemize}[nosep]
@@ -121,7 +122,7 @@ Se aplica la lógica \textbf{principio $\rightarrow$ riesgo $\rightarrow$ pregun
 \begin{itemize}[nosep]
     \item \textit{Riesgo:} Las cámaras exteriores capturan incidentalmente rostros, matrículas y trayectorias de transeúntes. El dataset de mejora se retiene hasta 12 meses (E8) y no consta información visible sobre la reutilización de datos para reentrenamiento.
     \item \textit{Pregunta de auditoría:} ¿Se ha realizado una Evaluación de Impacto en Protección de Datos (EIPD) conforme al artículo~35 del RGPD \parencite{eu2016rgpd}?
-    \item \textit{Evidencia:} Ausente. E8 describe retención pero no menciona EIPD, base legitimadora ni mecanismo de anonimización.
+    \item \textit{Evidencia:} Ausente. E8 describe retención pero no menciona EIPD ni mecanismo de anonimización, lo cual vulnera los principios de licitud y minimización de datos estudiados en la sesión \textit{IA y protección de datos personales}
 \end{itemize}
 
 \paragraph{3. Transparencia y explicabilidad.}
@@ -140,7 +141,7 @@ Se aplica la lógica \textbf{principio $\rightarrow$ riesgo $\rightarrow$ pregun
 
 \paragraph{5. Responsabilidad.}
 \begin{itemize}[nosep]
-    \item \textit{Riesgo:} La cadena de responsabilidad está fragmentada entre proveedor (modelo), integrador (vehículo) y operador (despliegue). Ante un incidente como E5, la atribución causal se reparte entre oclusión (percepción), mapa desactualizado (integrador) y latencia de cámara (hardware).
+    \item \textit{Riesgo:} La cadena de responsabilidad está fragmentada entre proveedor (modelo), integrador (vehículo) y operador (despliegue). Ante un incidente como E5, la atribución causal se reparte entre oclusión, mapa desactualizado y latencia. Como se estudia en el tema \textit{Régimen de responsabilidad civil y penal derivada del uso de sistemas inteligentes}, esta fragmentación dificulta enormemente la prueba del defecto y del nexo causal para exigir responsabilidades ante un daño.
     \item \textit{Pregunta de auditoría:} ¿Existe un acuerdo contractual que defina responsabilidades y obligaciones de notificación ante incidentes graves?
     \item \textit{Evidencia:} Insuficiente. El contrato menciona rollback (E9) pero no consta matriz RACI de incidentes ni protocolo de notificación a autoridades.
 \end{itemize}
@@ -232,7 +233,7 @@ Se construye un registro de seis riesgos que cubre las tres categorías exigidas
     \item \textit{Activo afectado:} Sensores lidar y cámaras.
     \item \textit{Actor adversario:} Atacante con acceso físico al entorno del itinerario.
     \item \textit{Superficie de ataque:} Señales ópticas e infrarrojas captadas por los sensores exteriores del vehículo.
-    \item \textit{Amenaza:} Inyección de puntos lidar falsos (\textit{spoofing}) o colocación de parches adversariales físicos que fuercen clasificaciones erróneas, provocando frenadas o ceguera ante obstáculos reales.
+    \item \textit{Amenaza:} Inyección de puntos lidar falsos (\textit{spoofing}) o colocación de parches adversariales físicos que fuercen clasificaciones erróneas, provocando frenadas o ceguera ante obstáculos reales. En la terminología de los temas \textit{PredAI Attacks and Mitigations} y \textit{Adversarial Machine Learning Taxonomy}, esto constituye un Ataque de Evasión en la fase de despliegue.
     \item \textit{Impacto:} Colisión o parada del servicio; riesgo de daño físico.
     \item \textit{Criticidad:} \textbf{Alta.}
     \item \textit{Responsable de mitigación:} Proveedor (robustez del modelo) e integrador (validación cruzada multisensor).
@@ -248,7 +249,7 @@ Se construye un registro de seis riesgos que cubre las tres categorías exigidas
     \item \textit{Actor adversario:} Atacante remoto o técnico malintencionado.
     \item \textit{Superficie de ataque:} Servicio SSH activo con usuario ``maintenance'' compartido y regla de firewall temporal no cerrada (E10).
     \item \textit{Amenaza:} Modificación de pesos del modelo o de umbrales de criticidad, provocando degradación silenciosa del sistema de seguridad.
-    \item \textit{Impacto:} Compromiso de la integridad del sistema de percepción; posible sabotaje con consecuencias físicas.
+    \item \textit{Impacto:} Compromiso de la integridad del sistema de percepción; posible sabotaje con consecuencias físicas. Este riesgo vulnera directamente la Tríada CIA (Confidencialidad e Integridad) analizada en la sesión \textit{Introduction to Cybersecurity}.
     \item \textit{Criticidad:} \textbf{Crítica.}
     \item \textit{Responsable de mitigación:} Integrador (hardening) y operador (auditoría de accesos).
     \item \textit{Control propuesto:} Deshabilitar SSH y sustituirlo por acceso basado en certificados individuales; cerrar la regla de firewall temporal; implementar autenticación multifactor y registro inmutable de accesos.
@@ -301,7 +302,9 @@ Se construye un registro de seis riesgos que cubre las tres categorías exigidas
 
 \paragraph{Justificación.} El sistema PEDSAFE-Urban v1.9 demuestra capacidades técnicas relevantes (recall global 0,94, arquitectura de fusión multisensor, modo mínimo de riesgo definido) que acreditan un diseño fundamentalmente sólido. Sin embargo, las deficiencias documentadas en supervisión humana, equidad, ciberseguridad y transparencia impiden un despliegue ampliado en su estado actual.
 
-\paragraph{Tres hallazgos principales.}
+\paragraph{Tres hallazgos principales.}~\\
+
+La formulación de los siguientes hallazgos y acciones prioritarias hace uso del vocabulario compartido de la asignatura, unificando en un único dictamen las exigencias de la normativa europea vistas en \textit{El Reglamento Europeo de IA} y \textit{IA y protección de datos personales}, las metodologías prácticas de \textit{Methodologies for Auditing AI Systems}, y los marcos de robustez de \textit{Introduction to Cybersecurity}. \\
 \begin{enumerate}[nosep]
     \item \textbf{H1 --- Supervisión humana insuficiente:} La contradicción entre el requisito de intervención ($<$1,5\,s, E1) y la latencia real (2,8\,s media, E7), combinada con la retirada prevista del asistente a bordo (E12), genera una brecha crítica de seguridad que incumple el artículo~14 del AI Act.
     \item \textbf{H2 --- Ausencia de evaluación de equidad:} No existen métricas desagregadas para los subgrupos más vulnerables (niños, usuarios con movilidad reducida), lo que impide verificar el cumplimiento del artículo~10 del AI Act y genera un riesgo de discriminación algorítmica con impacto en la seguridad física.
